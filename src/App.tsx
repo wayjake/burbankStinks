@@ -42,6 +42,9 @@ export default function App() {
          console.error(error)
          return
       }
+      if (!drops) {
+         return
+      }
       setDrops(drops)
    }
 
