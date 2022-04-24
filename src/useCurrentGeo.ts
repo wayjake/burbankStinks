@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react"
+import { GeoCoordinates } from "./App"
 
 const useCurrentGeo = () => {
-   const [latitude, setLatitude] = useState<number | null>(null)
-   const [longitude, setLongitude] = useState<number | null>(null)
+   const [coords, setCoords] = useState<GeoCoordinates>({
+      latitude: undefined,
+      longitude: undefined
+   })
 
    useEffect(() => {
       const watchId = navigator.geolocation.watchPosition(
          (position) => {
-            setLatitude(position.coords.latitude)
-            setLongitude(position.coords.longitude)
+            setCoords({
+               latitude: position.coords.latitude,
+               longitude: position.coords.longitude
+            })
          },
          () => {
             console.error("Unable to retrieve your location")
@@ -19,7 +24,7 @@ const useCurrentGeo = () => {
       }
    }, [])
 
-   return { latitude, longitude }
+   return coords
 }
 
 export default useCurrentGeo

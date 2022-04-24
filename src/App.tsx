@@ -1,90 +1,55 @@
-import styled from 'styled-components'
-import supabase from './Supabase'
-import { v4 as uuidv4 } from 'uuid'
-import { useEffect, useState } from 'react'
-import useCurrentGeo from './useCurrentGeo'
+import styled from "styled-components"
+import { createContext } from "react"
+import useCurrentGeo from "./useCurrentGeo"
+import { Routes, Route, Link, Outlet } from "react-router-dom"
+import routes from "./routes"
+import Map from "./Map"
+import DropPage from "./DropsPage"
 
 const StyledLoading = styled.div``
 
 const StyledApp = styled.div`
-    font-family: Arial, Helvetica, sans-serif;
-    textarea {
-        width: 80vw;
-        height: 5rem;
-        margin-bottom: 1.5rem;
-    }
+   @import url("http://fonts.cdnfonts.com/css/open-dyslexic");
+   font-family: "Open-Dyslexic", Helvetica, Arial, sans-serif;
+   textarea {
+      width: 80vw;
+      height: 5rem;
+      margin-bottom: 1.5rem;
+   }
 `
 
-const OFFSET = 0.1
+export interface GeoCoordinates {
+   latitude: undefined | number
+   longitude: undefined | number
+}
+
+export const UserGeoContext = createContext({
+   latitude: undefined,
+   longitude: undefined
+} as GeoCoordinates)
+
+const AppWrapper = () => {
+   const geoCoordinates = useCurrentGeo()
+
+   if (!geoCoordinates.latitude) {
+      return <StyledLoading>Waiting for geo coordinates...</StyledLoading>
+   }
+   return (
+      <UserGeoContext.Provider value={geoCoordinates}>
+         <Outlet />
+      </UserGeoContext.Provider>
+   )
+}
 
 export default function App() {
-    const [message, setMessage] = useState<string | null>()
-    const [drops, setDrops] = useState<any[]>([])
-    const { latitude, longitude } = useCurrentGeo()
-
-    const getLocalDrops = async () => {
-        if (!latitude || !longitude) {
-            return
-        }
-        const { data: drops, error } = await supabase
-            .from('drops')
-            .select('*')
-            // Filters
-            .gt('latitude', latitude - OFFSET)
-            .lt('latitude', latitude + OFFSET)
-            .gt('longitude', longitude - OFFSET)
-            .lt('longitude', longitude + OFFSET)
-            .neq('message', null)
-            .order('created_at', { ascending: false })
-            .range(0, 5)
-        if (error) {
-            console.log(`Error getting drops`)
-            console.error(error)
-            return
-        }
-        if (!drops) {
-            return
-        }
-        setDrops(drops)
-    }
-
-    useEffect(() => {
-        getLocalDrops()
-    }, [latitude, longitude])
-
-    const upsertItem = async () => {
-        if (!message) return
-        const { data, error } = await supabase.from('drops').insert([
-            {
-                user: uuidv4(),
-                latitude, //34.1970229,
-                longitude, //-118.3057203,
-                message,
-            },
-        ])
-        getLocalDrops()
-        if (error) console.error(error)
-    }
-
-    if (!latitude) {
-        return <StyledLoading>Waiting for geo coordinates...</StyledLoading>
-    }
-
-    return (
-        <StyledApp>
-            <h1>Drop it like it's hot!</h1>
-            <ul>
-                {drops?.map((drop) => (
-                    <li key={drop.id}>{drop.message}</li>
-                ))}
-            </ul>
-            <textarea
-                onChange={(e) => {
-                    setMessage(e.target.value)
-                }}
-            />
-            <br />
-            <button onClick={upsertItem}>INSERT</button>
-        </StyledApp>
-    )
+   return (
+      <StyledApp>
+         <Routes>
+            <Route path="/" element={<AppWrapper />}>
+               <Route path={routes.home} element={<DropPage />} />
+               <Route path={routes.map} element={<Map />} />
+            </Route>
+         </Routes>
+      </StyledApp>
+   )
 }
