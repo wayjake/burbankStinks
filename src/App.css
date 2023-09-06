@@ -1,0 +1,11 @@
+@import url('http://fonts.cdnfonts.com/css/open-dyslexic');
+
+.app {
+    font-family: 'Open-Dyslexic', Helvetica, Arial, sans-serif;
+}
+
+textarea {
+    width: 80vw;
+    height: 5rem;
+    margin-bottom: 1.5rem;
+}
